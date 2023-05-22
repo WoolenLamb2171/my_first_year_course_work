@@ -334,20 +334,6 @@ class Program
 {
     static void Main(string[] args)
     {
-        // Проинициализировал группу
-        // var group = new List<Node>()
-        // {
-        //     new Node(new Student(new int[] { 4, 4, 3, 5, 2 }, "Петров")),
-        //     new Node(new Student(new int[] { 5, 5, 5, 4, 5 }, "Сидоров")), //1
-        //     new Node(new Student(new int[] { 5, 5, 5, 5, 4 }, "Иванов")), //1
-        //     new Node(new Student(new int[] { 3, 3, 3, 2, 2 }, "Смирнов")),
-        //     new Node(new Student(new int[] { 5, 5, 4, 5, 2 }, "Васильев")),
-        //     new Node(new Student(new int[] { 4, 4, 4, 4, 4 }, "Попов")), //1
-        //     new Node(new Student(new int[] { 5, 5, 5, 2, 5 }, "Новиков")),
-        //     new Node(new Student(new int[] { 5, 5, 4, 5, 3 }, "Шилович")), //1
-        //     new Node(new Student(new int[] { 3, 3, 3, 3, 3 }, "Телегин")), //1
-        //     new Node(new Student(new int[] { 4, 4, 3, 4, 4 }, "Никитин")) //1
-        // };
         CircularLinkedList<Student> group = new CircularLinkedList<Student>();
         group.AddLast(new Student(new int[] { 4, 4, 2, 5, 4 }, "Петров"));
         group.AddLast(new Student(new int[] { 5, 5, 5, 4, 5 }, "Сидоров"));
