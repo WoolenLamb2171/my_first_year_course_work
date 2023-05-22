@@ -374,9 +374,9 @@ class Program
             }
         }
         
-        var sortedGroup = group.OrderBy(s => s.AverageGrade);
+        var sortedGroup = group.OrderByDescending(s => s.AverageGrade);
         
-        foreach (var student in group)
+        foreach (var student in sortedGroup)
         {
             Console.WriteLine($"{student.Name} AVG {student.AverageGrade}");
         }
