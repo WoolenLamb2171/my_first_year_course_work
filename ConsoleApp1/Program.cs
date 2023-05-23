@@ -1,31 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections;
 
 public class Student
 {
-    public double AverageGrade = 0;
+    public double AverageGrade;
     public string Name;
     public int MinGrade = 1000;
     public int[] Grades;
-
-    public Student()
-    {
-    }
 
     public Student(int[] grades, string name)
     {
         Grades = grades;
         Name = name;
-        for (int i = 0; i < Grades.Length; i++)
+        foreach (var t in Grades)
         {
-            AverageGrade += Grades[i];
-            if (Grades[i] < MinGrade)
+            AverageGrade += t;
+            if (t < MinGrade)
             {
-                MinGrade = Grades[i];
+                MinGrade = t;
             }
         }
-        AverageGrade = AverageGrade / grades.Length;
+
+        AverageGrade /= grades.Length;
     }
 }
 
@@ -33,156 +28,141 @@ public class StudentWithBonus : Student
 {
     public int Bonus;
 
-    public StudentWithBonus(int bonus, int[] grades, string name) : base(grades, name)
+    public StudentWithBonus(int[] grades, string name, int bonus) : base(grades, name)
     {
         Bonus = bonus;
     }
 }
 
-public sealed class Node<T>
+public class Node<T>
 {
-    public T Value { get; private set; }
-    public Node<T> Next { get; internal set; }
-    public Node<T> Previous { get; internal set; }
+    public T Value { get; }
+    public Node<T>? Next { get; internal set; }
+    public Node<T>? Previous { get; internal set; }
 
-    internal Node(T item, Node<T> next, Node<T> previous)
+    internal Node(T item, Node<T>? next, Node<T>? previous)
     {
-        this.Value = item;
-        this.Next = next;
-        this.Previous = previous;
+        Value = item;
+        Next = next;
+        Previous = previous;
     }
 }
 
-public sealed class CircularLinkedList<T> : ICollection<T>, IEnumerable<T>
+public sealed class CircularLinkedList<T> : ICollection<T>
 {
-    Node<T> head = null;
-    Node<T> tail = null;
-    int count = 0;
-    readonly IEqualityComparer<T> comparer;
+    private readonly IEqualityComparer<T> _comparer;
 
-    public CircularLinkedList()
-        : this(null, EqualityComparer<T>.Default)
+    public Node<T>? Tail { get; private set; }
+    public Node<T>? Head { get; private set; }
+    public int Count { get; private set; }
+    
+    public CircularLinkedList(IEnumerable<T>? collection, IEqualityComparer<T> comparer)
     {
-    }
-
-    public CircularLinkedList(IEnumerable<T> collection)
-        : this(collection, EqualityComparer<T>.Default)
-    {
-    }
-
-    public CircularLinkedList(IEqualityComparer<T> comparer)
-        : this(null, comparer)
-    {
-    }
-
-    public CircularLinkedList(IEnumerable<T> collection, IEqualityComparer<T> comparer)
-    {
-        if (comparer == null)
-            throw new ArgumentNullException("comparer");
-        this.comparer = comparer;
+        _comparer = comparer;
         if (collection != null)
         {
-            foreach (T item in collection)
-                this.AddLast(item);
-            count = collection.Count();
+            var enumerable = collection.ToList();
+            foreach (var item in enumerable)
+                AddToTail(item);
+            Count = enumerable.Count();
         }
     }
-
-    public Node<T> Tail { get { return tail; } }
-    public Node<T> Head
-    {
-        get { return head; }
-        set => head = value;
-    }
-
-    public int Count { get { return count; } }
+    
+    public CircularLinkedList() : this(null, EqualityComparer<T>.Default) { }
 
     public Node<T> this[int index]
     {
         get
         {
-            if (index >= count || index < 0)
-                throw new ArgumentOutOfRangeException("index");
-            else
-            {
-                Node<T> node = this.head;
-                for (int i = 0; i < index; i++)
-                    node = node.Next;
-                return node;
-            }
+            if (index >= Count || index < 0)
+                throw new ArgumentOutOfRangeException(nameof(index));
+            
+
+            Node<T> node = Head ?? throw new InvalidOperationException();
+            for (int i = 0; i < index; i++)
+                node = node!.Next!;
+            return node;
         }
     }
 
-    public void AddLast(T item)
+    public void AddToTail(T item)
     {
-        if (head == null)
-            this.AddFirstItem(item);
+        if (Head == null || Tail == null)
+        {
+            AddFirstItem(item);
+        }
         else
         {
-            Node<T> newNode = new Node<T>(item, head, tail);
-            tail.Next = newNode;
-            newNode.Next = head;
-            newNode.Previous = tail;
-            tail = newNode;
-            head.Previous = tail;
+            Node<T> newNode = new Node<T>(item, Head, Tail);
+            Tail.Next = newNode;
+            newNode.Next = Head;
+            newNode.Previous = Tail;
+            Head.Previous = newNode;
+            Tail = newNode;
         }
-        ++count;
-    }
 
-    void AddFirstItem(T item)
-    {
-        head = new Node<T>(item, tail, tail);
-        tail = head;
-        head.Next = tail;
-        head.Previous = tail;
+        ++Count;
     }
-
-    public void AddFirst(T item)
+    
+    public void AddToHead(T item)
     {
-        if (head == null)
-            this.AddFirstItem(item);
+        if (Head == null || Tail == null)
+            AddFirstItem(item);
         else
         {
-            Node<T> newNode = new Node<T>(item, head, tail);
-            head.Previous = newNode;
-            newNode.Previous = tail;
-            newNode.Next = head;
-            tail.Next = newNode;
-            head = newNode;
+            Node<T> newNode = new Node<T>(item, Head, Tail);
+            Head.Previous = newNode;
+            newNode.Next = Head;
+            newNode.Previous = Tail;
+            Tail.Next = newNode;
+            Head = newNode;
         }
-        ++count;
+
+        ++Count;
     }
+
+    private void AddFirstItem(T item)
+    {
+        Head = new Node<T>(item, null, null);
+        Tail = Head;
+        Head.Next = Tail;
+        Head.Previous = Tail;
+    }
+    
 
     public void AddAfter(Node<T> node, T item)
     {
-        if (node == null)
-            throw new ArgumentNullException("node");
-        Node<T> temp = this.FindNode(head, node.Value);
-        if (temp != node)
+        if (node == null || node.Next == null)
+            throw new ArgumentNullException(nameof(node));
+        if (Head == null)
+            throw new NullReferenceException(nameof(Head));
+        if (FindNode(Head, node.Value) != node)
             throw new InvalidOperationException("Node doesn't belong to this list");
 
         Node<T> newNode = new Node<T>(item, node.Next, node);
-        newNode.Next.Previous = newNode;
+        newNode.Next!.Previous = newNode;
         node.Next = newNode;
 
-        if (node == tail)
-            tail = newNode;
-        ++count;
+        if (node == Tail)
+            Tail = newNode;
+        ++Count;
     }
 
     public void AddAfter(T existingItem, T newItem)
     {
-        Node<T> node = this.Find(existingItem);
+        Node<T>? node = Find(existingItem);
         if (node == null)
             throw new ArgumentException("existingItem doesn't exist in the list");
-        this.AddAfter(node, newItem);
+        AddAfter(node, newItem);
     }
 
     public void AddBefore(Node<T> node, T item)
     {
-        if (node == null)
-            throw new ArgumentNullException("node");
-        Node<T> temp = this.FindNode(head, node.Value);
+        if (node == null || node.Previous == null)
+            throw new ArgumentNullException(nameof(node));
+        if (Head == null)
+            throw new NullReferenceException(nameof(Head));
+        Node<T>? temp = FindNode(Head, node.Value);
         if (temp != node)
             throw new InvalidOperationException("Node doesn't belong to this list");
 
@@ -190,45 +170,47 @@ public sealed class CircularLinkedList<T> : ICollection<T>, IEnumerable<T>
         node.Previous.Next = newNode;
         node.Previous = newNode;
 
-        if (node == head)
-            head = newNode;
-        ++count;
+        if (node == Head)
+            Head = newNode;
+        ++Count;
     }
 
     public void AddBefore(T existingItem, T newItem)
     {
-        Node<T> node = this.Find(existingItem);
+        Node<T>? node = Find(existingItem);
         if (node == null)
             throw new ArgumentException("existingItem doesn't exist in the list");
-        this.AddBefore(node, newItem);
+        AddBefore(node, newItem);
     }
 
-    public Node<T> Find(T item)
+    public Node<T>? Find(T item)
     {
-        Node<T> node = FindNode(head, item);
-        return node;
+        return FindNode(Head ?? throw new InvalidOperationException(), item);
     }
 
     public bool Remove(T item)
     {
-        Node<T> nodeToRemove = this.Find(item);
+        Node<T>? nodeToRemove = Find(item);
         if (nodeToRemove != null)
-            return this.RemoveNode(nodeToRemove);
+            return RemoveNode(nodeToRemove);
         return false;
     }
-
-    bool RemoveNode(Node<T> nodeToRemove)
+    
+    private bool RemoveNode(Node<T>? nodeToRemove)
     {
+        if (nodeToRemove == null || nodeToRemove.Previous == null || nodeToRemove.Next == null)
+            throw new ArgumentNullException(nameof(nodeToRemove));
+        
         Node<T> previous = nodeToRemove.Previous;
         previous.Next = nodeToRemove.Next;
         nodeToRemove.Next.Previous = nodeToRemove.Previous;
 
-        if (head == nodeToRemove)
-            head = nodeToRemove.Next;
-        else if (tail == nodeToRemove)
-            tail = tail.Previous;
+        if (Head == nodeToRemove)
+            Head = nodeToRemove.Next;
+        else if (Tail == nodeToRemove)
+            Tail = Tail.Previous;
 
-        --count;
+        --Count;
         return true;
     }
 
@@ -237,114 +219,115 @@ public sealed class CircularLinkedList<T> : ICollection<T>, IEnumerable<T>
         bool removed = false;
         do
         {
-            removed = this.Remove(item);
+            removed = Remove(item);
         } while (removed);
     }
 
     public void Clear()
     {
-        head = null;
-        tail = null;
-        count = 0;
+        Head = null;
+        Tail = null;
+        Count = 0;
     }
 
     public bool RemoveHead()
     {
-        return this.RemoveNode(head);
+        return RemoveNode(Head);
     }
 
     public bool RemoveTail()
     {
-        return this.RemoveNode(tail);
+        return RemoveNode(Tail);
     }
 
-    Node<T> FindNode(Node<T> node, T valueToCompare)
+    private Node<T>? FindNode(Node<T> node, T valueToCompare)
     {
-        Node<T> result = null;
-        if (comparer.Equals(node.Value, valueToCompare))
+        Node<T>? result = null;
+        if (_comparer.Equals(node.Value, valueToCompare))
             result = node;
-        else if (result == null && node.Next != head)
-            result = FindNode(node.Next, valueToCompare);
+        else if (result == null && node.Next != Head)
+            result = FindNode(node.Next!, valueToCompare);
         return result;
     }
 
     public IEnumerator<T> GetEnumerator()
     {
-        Node<T> current = head;
+        if (Head == null)
+            throw new NullReferenceException(nameof(Head));
+        Node<T> current = Head;
         if (current != null)
         {
             do
             {
-                yield return current.Value;
-                current = current.Next;
-            } while (current != head);
+                yield return current!.Value;
+                current = current.Next!;
+            } while (current != Head);
         }
     }
 
     public IEnumerator<T> GetReverseEnumerator()
     {
-        Node<T> current = tail;
+        if (Tail == null)
+            throw new NullReferenceException(nameof(Head));
+        Node<T> current = Tail;
         if (current != null)
         {
             do
             {
-                yield return current.Value;
-                current = current.Previous;
-            } while (current != tail);
+                yield return current!.Value;
+                current = current.Previous!;
+            } while (current != Tail);
         }
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+    IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
     }
 
     public bool Contains(T item)
     {
-        return Find(item) != null;
+        return Find(item) is not null;
     }
 
     public void CopyTo(T[] array, int arrayIndex)
     {
         if (array == null)
-            throw new ArgumentNullException("array");
+            throw new ArgumentNullException(nameof(array));
         if (arrayIndex < 0 || arrayIndex > array.Length)
-            throw new ArgumentOutOfRangeException("arrayIndex");
+            throw new ArgumentOutOfRangeException(nameof(arrayIndex));
 
-        Node<T> node = this.head;
+        Node<T> node = Head ?? throw new NullReferenceException(nameof(Head));
         do
         {
-            array[arrayIndex++] = node.Value;
-            node = node.Next;
-        } while (node != head);
+            array[arrayIndex++] = node!.Value;
+            node = node.Next!;
+        } while (node != Head);
     }
 
-    bool ICollection<T>.IsReadOnly
-    {
-        get { return false; }
-    }
+    bool ICollection<T>.IsReadOnly => false;
 
     void ICollection<T>.Add(T item)
     {
-        this.AddLast(item);
+        AddToTail(item);
     }
 }
 
-class Program
+internal static class Program
 {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
         CircularLinkedList<Student> group = new CircularLinkedList<Student>();
-        group.AddLast(new Student(new int[] { 4, 4, 2, 5, 4 }, "Петров"));
-        group.AddLast(new Student(new int[] { 5, 5, 5, 4, 5 }, "Сидоров"));
-        group.AddLast(new Student(new int[] { 5, 5, 5, 5, 4 }, "Иванов"));
-        group.AddLast(new Student(new int[] { 3, 3, 3, 2, 2 }, "Смирнов"));
-        group.AddLast(new Student(new int[] { 5, 5, 4, 5, 2 }, "Васильев"));
-        group.AddLast(new Student(new int[] { 4, 4, 4, 4, 4 }, "Попов"));
-        group.AddLast(new Student(new int[] { 5, 5, 5, 2, 5 }, "Новиков"));
-        group.AddLast(new Student(new int[] { 5, 5, 4, 2, 3 }, "Шилович"));
-        group.AddLast(new Student(new int[] { 3, 3, 2, 3, 5 }, "Телегин"));
-        group.AddLast(new Student(new int[] { 4, 4, 3, 4, 5 }, "Никитин"));
+        group.AddToTail(new Student(new[] { 4, 4, 2, 5, 4 }, "Петров"));
+        group.AddToTail(new StudentWithBonus(new[] { 5, 5, 5, 4, 5 }, "Сидоров", 2000));
+        group.AddToTail(new Student(new[] { 5, 5, 5, 5, 4 }, "Иванов"));
+        group.AddToTail(new Student(new[] { 3, 3, 3, 2, 2 }, "Смирнов"));
+        group.AddToHead(new StudentWithBonus(new[] { 5, 5, 4, 5, 2 }, "Васильев", 1000));
+        group.AddToHead(new Student(new[] { 4, 4, 4, 4, 4 }, "Попов"));
+        group.AddToTail(new StudentWithBonus(new[] { 5, 5, 5, 2, 5 }, "Новиков", 2000));
+        group.AddToTail(new Student(new[] { 5, 5, 4, 2, 3 }, "Шилович"));
+        group.AddToTail(new Student(new[] { 3, 3, 2, 3, 5 }, "Телегин"));
+        group.AddToTail(new Student(new[] { 4, 4, 3, 4, 5 }, "Никитин"));
 
         for (int i = 0; i < group.Count; i++)
         {
@@ -359,12 +342,16 @@ class Program
                 }
             }
         }
-        
+
         var sortedGroup = group.OrderByDescending(s => s.AverageGrade);
-        
+
         foreach (var student in sortedGroup)
         {
-            Console.WriteLine($"{student.Name} AVG {student.AverageGrade}");
+            if (student is StudentWithBonus bonusSt)
+            {
+                Console.WriteLine($"{bonusSt.Name} — AVG: {bonusSt.AverageGrade} — Bonus: {bonusSt.Bonus}");
+            }
+            Console.WriteLine($"{student.Name} — AVG {student.AverageGrade}");
         }
     }
 }
