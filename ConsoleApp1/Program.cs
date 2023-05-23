@@ -1,4 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 public class Student
 {
@@ -351,7 +354,10 @@ internal static class Program
             {
                 Console.WriteLine($"{bonusSt.Name} — AVG: {bonusSt.AverageGrade} — Bonus: {bonusSt.Bonus}");
             }
-            Console.WriteLine($"{student.Name} — AVG {student.AverageGrade}");
+            else
+            {
+                Console.WriteLine($"{student.Name} — AVG {student.AverageGrade}");
+            }
         }
     }
 }
